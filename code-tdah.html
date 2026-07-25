@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODE // TDAH — Réviser le code sans se disperser</title>
+<style>
+  :root{
+    --bg:#14171C;
+    --bg-elevated:#1A1E25;
+    --panel:#232830;
+    --panel-hi:#2B313B;
+    --ink:#F1EFEA;
+    --muted:#8B93A1;
+    --blue:#5B8DEF;
+    --red:#FF5A5F;
+    --amber:#FFB100;
+    --green:#33C17B;
+    --line:#333944;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+  .brand{
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .brand .slash{color:var(--amber);}
+  #app{
+    max-width:560px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding:20px 20px 32px;
+  }
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:4px 2px 20px;
+  }
+  .topbar .logo{font-size:1.05rem;}
+  .stat-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--panel);
+    border-radius:999px;
+    padding:6px 12px;
+    font-size:0.85rem;
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+  }
+  .stats-row{display:flex; gap:8px;}
+  .icon-btn{
+    background:none;border:none;color:var(--muted);
+    font-size:1.2rem; cursor:pointer; padding:6px;
+    border-radius:10px;
+  }
+  .icon-btn:hover{color:var(--ink); background:var(--panel);}
+  .icon-btn:focus-visible, button:focus-visible, .choice:focus-visible{
+    outline:2px solid var(--blue); outline-offset:2px;
+  }
+
+  /* ---------- Screens ---------- */
+  .screen{display:none; flex:1; flex-direction:column;}
+  .screen.active{display:flex;}
+
+  /* ---------- Home screen ---------- */
+  .hero-title{
+    font-size:2rem;
+    line-height:1.15;
+    margin:6px 0 6px;
+    text-transform:uppercase;
+    letter-spacing:0.01em;
+    font-weight:800;
+  }
+  .hero-sub{color:var(--muted); margin:0 0 24px; font-size:0.98rem;}
+
+  .metrics{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-bottom:26px;
+  }
+  .metric{
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:14px 10px;
+    text-align:center;
+  }
+  .metric .num{font-size:1.4rem; font-weight:800; font-variant-numeric:tabular-nums;}
+  .metric .lbl{font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin-top:2px;}
+
+  .section-label{
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+    margin:6px 0 10px;
+    font-weight:700;
+  }
+
+  .session-options{display:flex; flex-direction:column; gap:10px; margin-bottom:22px;}
+  .session-opt{
+    background:var(--panel);
+    border:2px solid transparent;
+    border-radius:var(--radius);
+    padding:16px 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+    color:var(--ink);
+    font-family:inherit;
+    text-align:left;
+  }
+  .session-opt:hover{background:var(--panel-hi);}
+  .session-opt.selected{border-color:var(--blue); background:var(--panel-hi);}
+  .session-opt .len-num{font-size:1.3rem; font-weight:800;}
+  .session-opt .len-time{color:var(--muted); font-size:0.85rem;}
+
+  .focus-chip{
+    display:inline-block;
+    background:rgba(255,177,0,0.12);
+    color:var(--amber);
+    border-radius:999px;
+    padding:4px 10px;
+    font-size:0.78rem;
+    font-weight:700;
+    margin:0 6px 6px 0;
+  }
+  .focus-wrap{margin-bottom:24px;}
+
+  .cta{
+    background:var(--blue);
+    color:#0C1220;
+    border:none;
+    border-radius:var(--radius);
+    padding:18px;
+    font-size:1.05rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    cursor:pointer;
+    margin-top:auto;
+  }
+  .cta:hover{filter:brightness(1.08);}
+  .cta:disabled{opacity:0.5; cursor:not-allowed;}
+
+  /* ---------- Session screen ---------- */
+  .gauge-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin:6px 0 22px;
+  }
+  .gauge{width:150px; height:150px;}
+  .gauge-center{
+    text-align:center;
+    margin-top:-98px;
+    font-variant-numeric:tabular-nums;
+  }
+  .gauge-center .q-count{font-size:1.5rem; font-weight:800;}
+  .gauge-center .q-time{font-size:0.78rem; color:var(--muted);}
+
+  .cat-label{
+    color:var(--amber);
+    font-size:0.78rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    text-align:center;
+  }
+  .question-card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:22px 20px;
+    margin-bottom:16px;
+  }
+  .question-text{font-size:1.15rem; line-height:1.4; font-weight:600; margin:0;}
+
+  .choices{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
+  .choice{
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:14px;
+    padding:15px 16px;
+    font-size:1rem;
+    text-align:left;
+    color:var(--ink);
+    font-family:inherit;
+    cursor:pointer;
+  }
+  .choice:hover{border-color:var(--blue);}
+  .choice.correct{border-color:var(--green); background:rgba(51,193,123,0.12);}
+  .choice.wrong{border-color:var(--red); background:rgba(255,90,95,0.12);}
+  .choice:disabled{cursor:default;}
+
+  .explain{
+    background:var(--bg-elevated);
+    border-left:3px solid var(--amber);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:0.9rem;
+    color:var(--muted);
+    margin-bottom:16px;
+    display:none;
+  }
+  .explain.show{display:block;}
+
+  .session-controls{
+    display:flex;
+    justify-content:space-between;
+    margin-top:auto;
+    padding-top:10px;
+  }
+  .ghost-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--muted);
+    border-radius:12px;
+    padding:10px 16px;
+    font-family:inherit;
+    cursor:pointer;
+    font-size:0.9rem;
+  }
+  .ghost-btn:hover{color:var(--ink); border-color:var(--muted);}
+
+  .next-btn{
+    background:var(--green);
+    color:#0C1220;
+    border:none;
+    border-radius:14px;
+    padding:16px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    cursor:pointer;
+    width:100%;
+    display:none;
+    margin-bottom:10px;
+  }
+  .next-btn.show{display:block;}
+
+  /* ---------- Break overlay ---------- */
+  .break-screen{
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+  .break-ring{
+    width:180px; height:180px;
+    margin:0 auto 26px;
+  }
+  .break-title{font-size:1.6rem; font-weight:800; text-transform:uppercase; margin:0 0 8px;}
+  .break-sub{color:var(--muted); max-width:320px; margin:0 auto 30px; line-height:1.5;}
+  .break-time{font-size:2.4rem; font-weight:800; font-variant-numeric:tabular-nums; margin-bottom:26px;}
+
+  /* ---------- Results screen ---------- */
+  .results-screen{align-items:center; text-align:center; justify-content:center;}
+  .results-score{font-size:3.2rem; font-weight:800; margin:10px 0 4px;}
+  .results-sub{color:var(--muted); margin-bottom:24px;}
+  .results-grid{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:10px;
+    width:100%; margin-bottom:26px;
+  }
+  .points-gain{
+    color:var(--amber); font-weight:800; font-size:1.1rem; margin-bottom:20px;
+  }
+
+  .flame{color:var(--amber);}
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--panel-hi); color:var(--ink); padding:12px 18px;
+    border-radius:12px; font-size:0.9rem; box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+    max-width:90%; text-align:center;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="logo brand">CODE<span class="slash">//</span>TDAH</div>
+    <div class="stats-row">
+      <span class="stat-pill"><span class="flame">🔥</span><span id="streakPill">0</span></span>
+      <span class="stat-pill">⭐ <span id="pointsPill">0</span></span>
+      <button class="icon-btn" id="notifBtn" title="Activer les rappels" aria-label="Activer les rappels">🔔</button>
+    </div>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <section class="screen active" id="screen-home">
+    <h1 class="hero-title">Réviser le code<br>sans se disperser.</h1>
+    <p class="hero-sub">Sessions courtes, chronométrées, avec pause imposée. Une question à la fois, rien d'autre à l'écran.</p>
+
+    <div class="metrics">
+      <div class="metric"><div class="num" id="mStreak">0</div><div class="lbl">Jours de suite</div></div>
+      <div class="metric"><div class="num" id="mAccuracy">—</div><div class="lbl">Réussite</div></div>
+      <div class="metric"><div class="num" id="mDone">0</div><div class="lbl">Questions faites</div></div>
+    </div>
+
+    <div class="section-label">Choisis ta session</div>
+    <div class="session-options" id="sessionOptions">
+      <button class="session-opt" data-len="5"><span><span class="len-num">5</span> questions</span><span class="len-time">~4 min</span></button>
+      <button class="session-opt selected" data-len="10"><span><span class="len-num">10</span> questions</span><span class="len-time">~8 min</span></button>
+      <button class="session-opt" data-len="15"><span><span class="len-num">15</span> questions</span><span class="len-time">~12 min</span></button>
+      <button class="session-opt" data-len="40"><span><span class="len-num">40</span> questions <span style="color:var(--amber); font-weight:700;">— examen blanc</span></span><span class="len-time">~32 min</span></button>
+    </div>
+
+    <div class="focus-wrap">
+      <div class="section-label">Priorité de révision</div>
+      <div id="focusChips"></div>
+    </div>
+
+    <button class="cta" id="startBtn">Commencer la session</button>
+  </section>
+
+  <!-- SESSION SCREEN -->
+  <section class="screen" id="screen-session">
+    <div class="gauge-wrap">
+      <svg class="gauge" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#2B313B" stroke-width="10"/>
+        <circle id="gaugeProgress" cx="60" cy="60" r="52" fill="none" stroke="#5B8DEF" stroke-width="10"
+          stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327"
+          transform="rotate(-90 60 60)"/>
+      </svg>
+      <div class="gauge-center">
+        <div class="q-count" id="qCount">1 / 10</div>
+        <div class="q-time" id="qTime">08:00</div>
+      </div>
+    </div>
+
+    <div class="cat-label" id="catLabel">Catégorie</div>
+    <div class="question-card">
+      <p class="question-text" id="questionText">…</p>
+    </div>
+    <div class="choices" id="choicesWrap"></div>
+    <div class="explain" id="explainBox"></div>
+
+    <button class="next-btn" id="nextBtn">Question suivante</button>
+    <div class="session-controls">
+      <button class="ghost-btn" id="pauseBtn">⏸ Pause</button>
+      <button class="ghost-btn" id="skipBtn">⏭ Passer</button>
+      <button class="ghost-btn" id="quitBtn">Quitter</button>
+    </div>
+  </section>
+
+  <!-- BREAK SCREEN -->
+  <section class="screen break-screen" id="screen-break">
+    <svg class="break-ring" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="52" fill="none" stroke="#2B313B" stroke-width="10"/>
+      <circle id="breakProgress" cx="60" cy="60" r="52" fill="none" stroke="#FFB100" stroke-width="10"
+        stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0"
+        transform="rotate(-90 60 60)"/>
+    </svg>
+    <p class="break-title">Pause</p>
+    <p class="break-sub" id="breakMsg">Lève-toi, bois un verre d'eau, regarde au loin quelques secondes.</p>
+    <div class="break-time" id="breakTime">05:00</div>
+    <button class="cta" id="resumeBtn" style="margin-top:0;">Reprendre maintenant</button>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen results-screen" id="screen-results">
+    <div class="section-label">Session terminée</div>
+    <div class="results-score" id="resultScore">8/10</div>
+    <p class="results-sub" id="resultMsg">Belle régularité.</p>
+    <div class="points-gain" id="pointsGain">+80 points</div>
+    <div class="results-grid">
+      <div class="metric"><div class="num" id="rStreak">1</div><div class="lbl">Série (jours)</div></div>
+      <div class="metric"><div class="num" id="rTotal">340</div><div class="lbl">Points totaux</div></div>
+    </div>
+    <button class="cta" id="backHomeBtn" style="width:100%;">Retour à l'accueil</button>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================
+   QUESTION BANK — questions d'entraînement originales,
+   organisées par thème du code de la route français.
+   ===================================================== */
+const QUESTIONS = [
+// --- Panneaux de danger (triangle) ---
+{cat:"Panneaux danger", q:"Un panneau triangulaire à bordure rouge annonce :", choices:["Une obligation à respecter","Un danger particulier à l'approche","Une interdiction définitive","Une indication touristique"], correct:1, exp:"Les panneaux triangulaires à fond blanc et bordure rouge signalent un danger (virage, école, chaussée glissante, etc.)."},
+{cat:"Panneaux danger", q:"Le panneau représentant des enfants signale :", choices:["Un passage à niveau","La proximité d'une école ou d'un lieu fréquenté par des enfants","Un parc de loisirs","Une aire de jeux interdite"], correct:1, exp:"Ce panneau invite à ralentir et à redoubler de vigilance près des écoles."},
+{cat:"Panneaux danger", q:"Un panneau annonçant un virage à droite suivi d'un second panneau signifie :", choices:["Il n'y a qu'un seul virage","Une succession de virages est à prévoir","La route redevient droite immédiatement","La vitesse maximale est doublée"], correct:1, exp:"L'annonce de virages successifs invite à anticiper plusieurs changements de direction rapprochés."},
+{cat:"Panneaux danger", q:"Le panneau \"chaussée glissante\" doit inciter le conducteur à :", choices:["Accélérer pour sortir de la zone plus vite","Adapter sa vitesse et éviter les freinages brusques","Ignorer le panneau si la route paraît sèche","Serrer le frein à main"], correct:1, exp:"Sur chaussée glissante, la distance de freinage augmente fortement : il faut ralentir en douceur."},
+{cat:"Panneaux danger", q:"Un panneau de danger avec une silhouette d'animal signifie :", choices:["Une zone d'élevage autorisée","Une traversée possible d'animaux sauvages","Un interdit de circuler aux animaux","Un poste de contrôle vétérinaire"], correct:1, exp:"Ce panneau prévient d'une possible traversée d'animaux, notamment en forêt ou zone rurale."},
+{cat:"Panneaux danger", q:"À l'approche d'un panneau annonçant un rétrécissement de chaussée, il faut :", choices:["Accélérer pour passer avant les autres","Ralentir et laisser la priorité selon la signalisation","Klaxonner systématiquement","Changer de file sans ralentir"], correct:1, exp:"Un rétrécissement impose souvent une priorité à sens unique alterné : il faut ralentir et observer."},
+{cat:"Panneaux danger", q:"Le panneau annonçant un passage à niveau sans barrière impose de :", choices:["Ne jamais s'arrêter, même si un train arrive","S'arrêter si un train approche ou si le signal l'indique","Accélérer pour passer avant le train","Klaxonner pour faire arrêter le train"], correct:1, exp:"Sans barrière, la vigilance du conducteur est essentielle : il doit s'arrêter en cas de danger."},
+{cat:"Panneaux danger", q:"Un panneau de danger \"cassis ou dos-d'âne\" signale :", choices:["Une déformation de la chaussée à aborder à vitesse réduite","Une route en travaux définitifs","Un radar fixe","Une aire de repos"], correct:0, exp:"Ce panneau annonce une bosse ou un creux sur la chaussée pouvant déstabiliser le véhicule si abordé trop vite."},
+
+// --- Panneaux d'obligation / interdiction (ronds) ---
+{cat:"Panneaux obligation", q:"Un panneau rond à fond bleu représente en général :", choices:["Une interdiction","Une obligation à suivre","Une information sans contrainte","Un danger imminent"], correct:1, exp:"Les panneaux ronds à fond bleu indiquent une obligation (direction imposée, piste cyclable, etc.)."},
+{cat:"Panneaux obligation", q:"Un panneau rond à fond blanc bordé de rouge indique en général :", choices:["Une obligation","Une interdiction","Une simple information","Une priorité"], correct:1, exp:"Les panneaux ronds bordés de rouge (sur fond blanc) signalent une interdiction (dépassement, vitesse, accès)."},
+{cat:"Panneaux obligation", q:"Le panneau \"sens interdit\" (disque rouge avec barre blanche) signifie :", choices:["Sens unique dans les deux directions","Interdiction absolue de circuler dans ce sens","Priorité à droite obligatoire","Chaussée réservée aux bus"], correct:1, exp:"Ce panneau interdit formellement l'accès dans le sens indiqué, y compris aux piétons poussant un vélo dans certains cas d'assimilation."},
+{cat:"Panneaux obligation", q:"Un panneau \"fin d'interdiction de dépasser\" annonce que :", choices:["Le dépassement redevient possible si les conditions le permettent","Le dépassement reste interdit jusqu'à la prochaine ville","La vitesse minimale est supprimée","Une nouvelle interdiction commence"], correct:0, exp:"La fin d'une interdiction lève la contrainte, mais le dépassement doit rester possible en toute sécurité."},
+{cat:"Panneaux obligation", q:"Le panneau rond bleu avec une flèche blanche impose :", choices:["Une direction obligatoire à suivre","Un simple conseil de direction","Une interdiction de tourner","Une priorité ponctuelle"], correct:0, exp:"Les flèches sur fond bleu imposent la direction à prendre à l'approche de l'intersection."},
+{cat:"Panneaux obligation", q:"Un panneau représentant un vélo sur fond bleu rond signifie :", choices:["Piste ou bande cyclable obligatoire pour les cyclistes","Vélos interdits","Zone de stationnement pour vélos uniquement","Sens interdit aux vélos"], correct:0, exp:"Ce panneau oblige les cyclistes à emprunter la piste ou bande qui leur est réservée quand elle existe."},
+{cat:"Panneaux obligation", q:"Le panneau de vitesse minimale obligatoire s'applique le plus souvent :", choices:["En agglomération dense","Sur certaines voies rapides ou tunnels pour fluidifier le trafic","Sur les chemins de terre","Dans les zones piétonnes"], correct:1, exp:"Cette signalisation, rare, évite les écarts de vitesse dangereux sur des axes où rouler trop lentement pose un risque."},
+
+// --- Priorités et intersections ---
+{cat:"Priorités", q:"En l'absence de signalisation, la règle générale aux intersections est :", choices:["Priorité à gauche","Priorité à droite","Priorité au véhicule le plus rapide","Priorité au premier arrivé"], correct:1, exp:"La priorité à droite s'applique par défaut, sauf indication contraire (panneaux, feux, marquage)."},
+{cat:"Priorités", q:"Sur un rond-point classique en France, la priorité est en général :", choices:["Au véhicule qui entre dans le rond-point","Au véhicule déjà engagé dans le rond-point","Au véhicule le plus lourd","Alternée selon les heures"], correct:1, exp:"Sauf signalisation contraire, celui qui est déjà dans l'anneau du rond-point est prioritaire sur celui qui souhaite s'y engager."},
+{cat:"Priorités", q:"Un panneau \"STOP\" impose de :", choices:["Ralentir fortement sans obligation de s'arrêter","S'arrêter complètement, même si la voie semble libre","S'arrêter uniquement la nuit","Céder le passage seulement aux piétons"], correct:1, exp:"Le stop impose un arrêt total du véhicule, quelle que soit la visibilité, avant de repartir en sécurité."},
+{cat:"Priorités", q:"Le panneau \"Cédez le passage\" (triangle pointe en bas) signifie :", choices:["Il faut s'arrêter obligatoirement","Il faut ralentir et céder le passage si nécessaire, sans arrêt obligatoire","La priorité est acquise dans tous les cas","Le panneau ne concerne que les poids lourds"], correct:1, exp:"Contrairement au stop, un arrêt n'est obligatoire que si un véhicule prioritaire arrive réellement."},
+{cat:"Priorités", q:"À une intersection avec un véhicule prioritaire annoncé par un panneau losange jaune, ce dernier :", choices:["Doit s'arrêter pour laisser passer les autres","Conserve sa priorité sur les voies qu'il croise","N'a aucune priorité particulière","Doit ralentir avant chaque carrefour uniquement la nuit"], correct:1, exp:"Le losange jaune signale une route à caractère prioritaire jusqu'au panneau de fin de priorité."},
+{cat:"Priorités", q:"Un véhicule qui sort d'un parking pour s'engager sur une route :", choices:["A la priorité sur les véhicules déjà sur la route","Doit céder le passage à tous les usagers de la route","Est prioritaire uniquement s'il vient de la droite","Peut s'engager sans vérifier si la route est peu fréquentée"], correct:1, exp:"Un véhicule débouchant d'un accès particulier (parking, chemin) doit toujours céder le passage."},
+{cat:"Priorités", q:"Aux intersections où les feux sont éteints (panne), la règle qui s'applique est :", choices:["Le premier arrivé passe en premier, sans autre règle","La priorité à droite, comme en l'absence de tout autre signal","Les véhicules doivent faire demi-tour","Seuls les bus sont prioritaires"], correct:1, exp:"En cas de panne des feux, on revient à la règle de base : la priorité à droite."},
+
+// --- Vitesses & distances de sécurité ---
+{cat:"Vitesses & distances", q:"En l'absence d'indication contraire, la vitesse maximale autorisée en agglomération en France est :", choices:["30 km/h","50 km/h","70 km/h","90 km/h"], correct:1, exp:"La limite générale en agglomération est de 50 km/h, sauf signalisation spécifique (zones 30, zones de rencontre)."},
+{cat:"Vitesses & distances", q:"Sur autoroute par temps de pluie, la vitesse maximale autorisée est généralement réduite à :", choices:["130 km/h","110 km/h","90 km/h","70 km/h"], correct:1, exp:"Par temps de pluie, la vitesse sur autoroute est limitée à 110 km/h au lieu de 130 km/h par temps sec."},
+{cat:"Vitesses & distances", q:"La règle des \"deux secondes\" sert à :", choices:["Mesurer le temps de réaction avant de freiner","Estimer une distance de sécurité suffisante avec le véhicule qui précède","Calculer le temps de dépassement autorisé","Fixer la durée maximale d'un clignotant"], correct:1, exp:"En comptant deux secondes entre le passage du véhicule précédent et le sien à un repère fixe, on vérifie une distance de sécurité correcte."},
+{cat:"Vitesses & distances", q:"Par temps de brouillard réduisant la visibilité à moins de 50 mètres, la vitesse est limitée à :", choices:["50 km/h","70 km/h","90 km/h","110 km/h"], correct:0, exp:"Une visibilité inférieure à 50 m impose une vitesse maximale de 50 km/h, feux de brouillard recommandés."},
+{cat:"Vitesses & distances", q:"La distance de freinage augmente principalement avec :", choices:["Le nombre de passagers uniquement","La vitesse, l'état de la route et des pneus","La couleur du véhicule","La marque du véhicule"], correct:1, exp:"Vitesse élevée, chaussée mouillée ou pneus usés allongent nettement la distance nécessaire pour s'arrêter."},
+{cat:"Vitesses & distances", q:"Sur route à deux voies hors agglomération, sans autre indication, la vitesse maximale est :", choices:["70 km/h","80 km/h","90 km/h","100 km/h"], correct:1, exp:"Depuis la réforme de 2018 (aménageable localement par le département), la limite de référence est de 80 km/h sur ces routes."},
+{cat:"Vitesses & distances", q:"Le \"jeune conducteur\" en période probatoire doit respecter :", choices:["Les mêmes vitesses maximales que les conducteurs expérimentés, sans restriction","Des vitesses maximales réduites par rapport aux limites générales","Une vitesse minimale plus élevée","Aucune limitation spécifique"], correct:1, exp:"Durant la période probatoire, des vitesses maximales réduites s'appliquent sur route et autoroute."},
+
+// --- Alcool, stupéfiants & fatigue ---
+{cat:"Alcool & fatigue", q:"Le taux d'alcoolémie maximal autorisé pour un conducteur expérimenté en France est :", choices:["0,2 g/L de sang","0,5 g/L de sang","0,8 g/L de sang","1,0 g/L de sang"], correct:1, exp:"Le seuil légal général est de 0,5 gramme d'alcool par litre de sang (0,25 mg/L d'air expiré)."},
+{cat:"Alcool & fatigue", q:"Pour un conducteur en période probatoire (permis récent), le taux d'alcoolémie maximal autorisé est :", choices:["0,5 g/L","0,2 g/L","0,8 g/L","Aucune limite spécifique"], correct:1, exp:"Les conducteurs novices doivent respecter un seuil plus strict de 0,2 g/L, proche de la tolérance zéro."},
+{cat:"Alcool & fatigue", q:"La fatigue au volant se traduit notamment par :", choices:["Une amélioration des réflexes","Une baisse de vigilance et un allongement du temps de réaction","Une meilleure perception des distances","Aucun effet si le trajet est court"], correct:1, exp:"La fatigue réduit la vigilance et ralentit les réflexes, augmentant fortement le risque d'accident."},
+{cat:"Alcool & fatigue", q:"En cas de signes de somnolence au volant, la meilleure attitude est de :", choices:["Ouvrir la fenêtre et continuer à rouler","S'arrêter dès que possible et faire une pause ou dormir un peu","Augmenter la vitesse pour arriver plus vite","Boire du café juste avant de recommencer sans pause"], correct:1, exp:"Seul un arrêt réel (et idéalement une courte sieste) permet de retrouver une vigilance suffisante."},
+{cat:"Alcool & fatigue", q:"La consommation de stupéfiants au volant est :", choices:["Tolérée en dessous d'un certain seuil","Interdite, quelle que soit la quantité détectée","Autorisée si le conducteur se sent en état de conduire","Autorisée uniquement de jour"], correct:1, exp:"Contrairement à l'alcool, la loi française applique une tolérance zéro pour les stupéfiants au volant."},
+{cat:"Alcool & fatigue", q:"Certains médicaments peuvent affecter la conduite ; il faut alors :", choices:["Vérifier le pictogramme sur la boîte et l'avis du pharmacien/médecin","Ignorer les pictogrammes s'ils datent d'une ancienne ordonnance","Ne consulter personne, l'expérience suffit","Doubler la dose pour compenser la fatigue"], correct:0, exp:"Les pictogrammes (niveau 1 à 3) alertent sur les risques ; il faut suivre les conseils du professionnel de santé."},
+
+// --- Sécurité passive / équipements ---
+{cat:"Sécurité & équipements", q:"Le port de la ceinture de sécurité est obligatoire :", choices:["Uniquement sur autoroute","À toutes les places équipées, à l'avant comme à l'arrière","Uniquement pour le conducteur","Uniquement en cas de trajet de plus de 50 km"], correct:1, exp:"La ceinture est obligatoire pour tous les occupants disposant d'une place équipée, quel que soit le trajet."},
+{cat:"Sécurité & équipements", q:"Un enfant de moins de 10 ans doit en général être installé :", choices:["À l'avant sans dispositif particulier","Dans un dispositif de retenue adapté à son âge et sa taille","Sur les genoux d'un adulte à l'arrière","Debout à l'arrière si le trajet est court"], correct:1, exp:"Un siège ou rehausseur homologué, adapté à sa morphologie, est requis pour les enfants jusqu'à 10 ans en général."},
+{cat:"Sécurité & équipements", q:"En cas de panne sur autoroute, le gilet haute visibilité doit être enfilé :", choices:["Une fois sorti du véhicule, avant de se mettre en sécurité","Uniquement si un accident a eu lieu","Seulement la nuit","Il n'est pas obligatoire sur autoroute"], correct:0, exp:"Le gilet doit être mis avant de sortir du véhicule (ou dès la sortie) pour être visible immédiatement."},
+{cat:"Sécurité & équipements", q:"Le triangle de présignalisation doit être posé :", choices:["Juste à côté du véhicule en panne","À une distance suffisante en amont pour prévenir les autres usagers","Uniquement si un agent le demande","Sur le toit du véhicule"], correct:1, exp:"Il doit être placé à distance (environ 30 m minimum, plus sur autoroute) pour laisser le temps aux autres de réagir."},
+{cat:"Sécurité & équipements", q:"L'utilisation d'un téléphone tenu en main au volant est :", choices:["Autorisée à l'arrêt à un feu rouge","Interdite dans tous les cas en circulation","Autorisée si le trajet est court","Autorisée avec les warnings allumés"], correct:1, exp:"Tenir un téléphone en main est interdit dès que le moteur tourne, y compris à l'arrêt à un feu."},
+{cat:"Sécurité & équipements", q:"Les pneus d'un véhicule doivent être changés lorsque :", choices:["La profondeur des sculptures est insuffisante ou qu'ils sont endommagés","Ils ont plus de 2 ans, quel que soit leur état","La couleur change légèrement","Le véhicule dépasse 100 000 km, sans autre critère"], correct:0, exp:"C'est l'état réel (usure, dommages, profondeur légale minimale) qui détermine si un pneu doit être remplacé."},
+
+// --- Premiers secours & comportement en cas d'accident ---
+{cat:"Premiers secours", q:"Sur les lieux d'un accident, le premier réflexe à avoir est de :", choices:["Déplacer immédiatement les blessés","Protéger la zone pour éviter un sur-accident","Filmer la scène pour les assurances","Repartir si on n'est pas impliqué"], correct:1, exp:"La priorité \"Protéger, Alerter, Secourir\" commence par sécuriser la zone (warnings, triangle, gilet)."},
+{cat:"Premiers secours", q:"Le numéro d'urgence européen valable partout en France est :", choices:["15","17","112","18"], correct:2, exp:"Le 112 est le numéro d'urgence unique européen, accessible même sans réseau de l'opérateur habituel."},
+{cat:"Premiers secours", q:"Face à une victime consciente qui se plaint, il faut avant tout :", choices:["La faire marcher pour vérifier qu'elle va bien","La laisser dans la position où elle se sent le moins mal et alerter les secours","La faire asseoir dans sa voiture immédiatement","Lui donner à boire systématiquement"], correct:1, exp:"Sans compétence médicale, on évite de mobiliser la victime inutilement et on alerte rapidement les secours."},
+{cat:"Premiers secours", q:"En cas d'accident sans blessé apparent, il est recommandé de :", choices:["Ne rien faire et repartir sans échanger d'informations","Établir un constat amiable et échanger les informations utiles","Appeler uniquement son assureur, sans échanger avec l'autre conducteur","Attendre la police même pour un simple accrochage sans gravité"], correct:1, exp:"Un constat amiable rempli avec l'autre conducteur facilite le traitement du dossier par les assurances."},
+
+// --- Éco-conduite & environnement ---
+{cat:"Éco-conduite", q:"L'éco-conduite consiste notamment à :", choices:["Accélérer puis freiner fortement pour gagner du temps","Anticiper la circulation et adopter une conduite souple","Rouler avec le moteur toujours au régime maximal","Couper le moteur uniquement sur autoroute"], correct:1, exp:"Anticiper les feux, ronds-points et ralentissements permet de limiter les accélérations et freinages inutiles."},
+{cat:"Éco-conduite", q:"Couper le moteur à l'arrêt prolongé (feu long, passage à niveau) permet de :", choices:["Réduire la consommation et les émissions polluantes","Endommager systématiquement la batterie","Diminuer la durée de vie du moteur dans tous les cas","N'a aucun effet sur la consommation"], correct:0, exp:"Un moteur qui tourne à l'arrêt consomme du carburant et émet des polluants inutilement."},
+{cat:"Éco-conduite", q:"Une pression de pneus insuffisante entraîne :", choices:["Une consommation de carburant réduite","Une surconsommation et une usure prématurée des pneus","Une meilleure adhérence en toutes circonstances","Aucun impact sur la conduite"], correct:1, exp:"Un pneu sous-gonflé augmente la résistance au roulement, donc la consommation, et s'use plus vite."},
+
+// --- Autoroute & conduite spécifique ---
+{cat:"Autoroute", q:"Sur autoroute, la bande d'arrêt d'urgence est réservée :", choices:["Au dépassement en cas de trafic dense","Aux arrêts d'urgence et aux véhicules de secours","Au stationnement de courte durée","Aux véhicules lents en permanence"], correct:1, exp:"Circuler ou s'arrêter sur la bande d'arrêt d'urgence est interdit hors situation d'urgence réelle."},
+{cat:"Autoroute", q:"Pour s'insérer sur une autoroute depuis une bretelle d'accès, il faut :", choices:["S'arrêter en haut de la bretelle avant de s'insérer","Adapter sa vitesse à celle du trafic pour s'insérer sans gêner","Forcer le passage en cas de trafic dense","Utiliser la bande d'arrêt d'urgence pour accélérer"], correct:1, exp:"La voie d'insertion sert à atteindre une vitesse proche de celle de l'autoroute avant de s'y engager."},
+{cat:"Autoroute", q:"En cas de bouchon soudain sur autoroute, la meilleure réaction est de :", choices:["Allumer ses feux de détresse et ralentir progressivement","Freiner brutalement sans avertir","Zigzaguer entre les voies pour ralentir plus vite","Accélérer pour sortir du bouchon avant les autres"], correct:0, exp:"Les feux de détresse avertissent les véhicules suivants pendant qu'on décélère progressivement."},
+{cat:"Autoroute", q:"Sur autoroute, dépasser par la droite est :", choices:["Autorisé si la voie de droite est plus rapide","Interdit, sauf cas particuliers prévus par le code (files parallèles ralenties, etc.)","Toujours autorisé la nuit","Réservé aux véhicules prioritaires"], correct:1, exp:"Le dépassement se fait par la gauche ; le dépassement par la droite reste une exception encadrée, pas la règle."},
+{cat:"Autoroute", q:"Avant un long trajet sur autoroute, il est recommandé de :", choices:["Vérifier les niveaux du véhicule et prévoir des pauses régulières","Partir sans vérification, l'autoroute est toujours sûre","Rouler le plus vite possible pour limiter le temps de trajet","Éviter les aires de repos pour gagner du temps"], correct:0, exp:"Une pause toutes les deux heures environ et une vérification rapide du véhicule réduisent nettement les risques."},
+
+{cat:"Réglementation & documents", q:"Le permis de conduire probatoire dure, pour une formation classique, environ :", choices:["1 an","3 ans","5 ans","10 ans"], correct:1, exp:"La période probatoire est en général de 3 ans (2 ans en cas d'apprentissage anticipé de la conduite)."},
+{cat:"Réglementation & documents", q:"Le certificat d'immatriculation (carte grise) doit être :", choices:["Conservé chez soi uniquement","À bord du véhicule ou présentable rapidement en cas de contrôle","Renouvelé chaque année sans exception","Facultatif si le véhicule est récent"], correct:1, exp:"Ce document doit pouvoir être présenté lors d'un contrôle ; il est conseillé de le garder dans le véhicule."},
+{cat:"Réglementation & documents", q:"Le disque de stationnement (zone bleue) doit indiquer :", choices:["L'heure de fin de stationnement souhaitée","L'heure d'arrivée du véhicule","Le numéro de la place de stationnement","Le nombre de passagers"], correct:1, exp:"On règle le disque sur l'heure d'arrivée, ce qui permet de calculer la durée maximale autorisée."},
+{cat:"Réglementation & documents", q:"Le système du permis à points retire des points en cas de :", choices:["Contrôle technique en retard","Infraction constatée et sanctionnée","Changement de véhicule","Déménagement"], correct:1, exp:"Ce sont les infractions au code de la route qui entraînent un retrait de points, pas les démarches administratives."},
+{cat:"Réglementation & documents", q:"En cas d'accident responsable avec dommages matériels, l'assurance concernée est en priorité :", choices:["L'assurance au tiers minimum, obligatoire pour tout véhicule","Une assurance optionnelle, non obligatoire","Uniquement l'assurance de l'autre conducteur","Aucune assurance n'est nécessaire pour un dommage matériel"], correct:0, exp:"L'assurance responsabilité civile (au minimum) est obligatoire pour tout véhicule circulant sur la voie publique."},
+{cat:"Réglementation & documents", q:"Un contrôle technique pour un véhicule léger doit en général être renouvelé :", choices:["Tous les ans, sans exception","Tous les 2 ans après le premier contrôle","Tous les 5 ans","Une seule fois, à l'achat"], correct:1, exp:"Après un premier contrôle technique, le renouvellement se fait généralement tous les 2 ans pour un véhicule léger."},
+{cat:"Réglementation & documents", q:"Un conducteur qui perd tous ses points de permis :", choices:["Peut continuer à conduire normalement","Voit son permis invalidé et doit le repasser","Reçoit automatiquement des points supplémentaires","N'est concerné que si l'infraction a eu lieu à l'étranger"], correct:1, exp:"Un solde de points à zéro entraîne l'invalidation du permis ; il faut alors repasser les épreuves."},
+{cat:"Réglementation & documents", q:"L'apprentissage anticipé de la conduite (conduite accompagnée) permet notamment de :", choices:["Conduire seul dès 16 ans sans accompagnateur","Réduire la durée de la période probatoire et gagner de l'expérience avant le permis","Éviter complètement l'épreuve pratique","Conduire uniquement en agglomération"], correct:1, exp:"La conduite accompagnée permet d'accumuler de l'expérience encadrée et raccourcit la période probatoire classique."},
+
+{cat:"Le conducteur", q:"Adopter une conduite apaisée (éviter l'agressivité au volant) permet surtout de :", choices:["Perdre du temps sur le trajet","Réduire le risque d'erreurs et de conflits avec les autres usagers","Consommer plus de carburant","Aucun effet réel sur la sécurité"], correct:1, exp:"Une conduite calme limite les prises de risque et les réactions impulsives, sources fréquentes d'accidents."},
+{cat:"Le conducteur", q:"Face à un autre conducteur agressif (klaxon, appels de phares), la bonne attitude est de :", choices:["Répondre par une manœuvre similaire","Rester calme, ne pas envenimer la situation et continuer prudemment","S'arrêter au milieu de la route pour discuter","Accélérer pour le semer"], correct:1, exp:"Ne pas entrer dans l'escalade reste la meilleure façon d'éviter un accident ou un conflit qui dégénère."},
+{cat:"Le conducteur", q:"L'usage d'écouteurs dans les deux oreilles en conduisant est :", choices:["Autorisé sans restriction","Interdit, comme le téléphone tenu en main","Autorisé uniquement sur autoroute","Autorisé si le volume est faible"], correct:1, exp:"Porter un dispositif audio dans les deux oreilles est interdit au volant, cela réduit la perception de l'environnement sonore."},
+{cat:"Le conducteur", q:"Avant de démarrer, un bon réflexe est de :", choices:["Régler le siège, les rétroviseurs et attacher sa ceinture","Démarrer directement sans réglage si le trajet est court","Ne régler les rétroviseurs qu'en cas de doute","Vérifier uniquement le niveau de carburant"], correct:0, exp:"Une bonne installation au poste de conduite conditionne la visibilité et les réflexes tout au long du trajet."},
+{cat:"Le conducteur", q:"Le \"syndrome de la vitre teintée\" (comportement plus agressif en anonymat perçu) doit inciter à :", choices:["Se permettre plus d'écarts, personne ne nous voit","Garder les mêmes règles de courtoisie qu'à visage découvert","Rouler plus vite systématiquement","Ignorer les autres usagers"], correct:1, exp:"Le sentiment d'anonymat ne change rien aux règles ni aux risques : la prudence doit rester la même."},
+{cat:"Le conducteur", q:"Un conducteur stressé ou pressé par le temps devrait avant tout :", choices:["Accélérer pour rattraper le retard","Accepter d'arriver un peu plus tard plutôt que de prendre des risques","Prendre des raccourcis inconnus à vive allure","Doubler dans des zones où c'est risqué pour gagner quelques minutes"], correct:1, exp:"Le stress pousse à prendre des risques ; mieux vaut accepter un léger retard que compromettre la sécurité."},
+{cat:"Le conducteur", q:"Manger ou boire tout en conduisant :", choices:["N'a aucun impact si on reste attentif","Peut réduire la vigilance et la disponibilité des mains sur le volant","Est officiellement recommandé sur autoroute","Est interdit uniquement pour les nourritures chaudes"], correct:1, exp:"Cela détourne l'attention et mobilise une main, ce qui réduit la réactivité en cas d'imprévu."},
+
+{cat:"Autres usagers", q:"En présence d'un cycliste devant soi sur une route étroite, il faut :", choices:["Le doubler au plus près pour gagner du temps","Garder une distance latérale de sécurité suffisante en le dépassant","Klaxonner puis le doubler immédiatement","Rouler juste derrière lui sans le dépasser"], correct:1, exp:"Une distance latérale minimale (souvent 1 m en agglomération, 1,5 m hors agglomération) protège les cyclistes lors du dépassement."},
+{cat:"Autres usagers", q:"À l'approche d'un passage piéton où une personne attend de traverser, le conducteur doit :", choices:["Accélérer pour passer avant elle","Ralentir et s'arrêter si nécessaire pour la laisser traverser","Klaxonner pour qu'elle attende","Continuer normalement, elle doit attendre"], correct:1, exp:"Le conducteur doit céder le passage aux piétons engagés ou sur le point de s'engager sur un passage piéton."},
+{cat:"Autres usagers", q:"Un angle mort de poids lourd désigne :", choices:["Une zone où le chauffeur ne peut pas voir certains usagers proches de son véhicule","Une zone où le poids lourd roule plus vite","Un type de panneau spécifique aux poids lourds","Une zone réservée uniquement la nuit"], correct:0, exp:"Il faut éviter de stationner ou circuler durablement dans ces zones où le chauffeur ne peut pas vous voir."},
+{cat:"Autres usagers", q:"Face à un motard ou scootériste qui remonte une file de voitures à l'arrêt, il faut :", choices:["Ouvrir sa portière brusquement sans regarder","Vérifier ses rétroviseurs et angles morts avant tout mouvement","L'empêcher de passer en serrant les files","Klaxonner pour le faire ralentir"], correct:1, exp:"Toujours vérifier avant d'ouvrir une portière ou de changer de position, un deux-roues peut circuler entre les files."},
+{cat:"Autres usagers", q:"Face à une personne à mobilité réduite qui traverse lentement, le conducteur doit :", choices:["Klaxonner pour accélérer sa traversée","Lui laisser le temps nécessaire, sans la presser","Redémarrer dès qu'elle a fait un pas","Rouler juste derrière elle pour la faire avancer"], correct:1, exp:"Il faut lui laisser tout le temps nécessaire pour traverser en sécurité, sans manifester d'impatience."},
+{cat:"Autres usagers", q:"Dans une zone de rencontre, les piétons :", choices:["N'ont aucune priorité particulière","Sont prioritaires sur les véhicules, qui doivent rouler au pas","Sont interdits de circulation","Doivent rester uniquement sur les trottoirs"], correct:1, exp:"En zone de rencontre, la vitesse est limitée à 20 km/h et les piétons sont prioritaires sur toute la largeur de la voie."},
+{cat:"Autres usagers", q:"Un enfant qui joue près de la chaussée doit inciter le conducteur à :", choices:["Poursuivre sa vitesse normale, l'enfant est responsable","Ralentir et rester très vigilant, un enfant peut agir de façon imprévisible","Klaxonner pour le prévenir de s'écarter","Accélérer pour s'éloigner plus vite de la zone"], correct:1, exp:"Le comportement des enfants étant imprévisible, une vigilance accrue et une vitesse réduite s'imposent."},
+
+{cat:"Mécanique & équipements", q:"Le témoin lumineux orange du tableau de bord signale en général :", choices:["Un danger immédiat nécessitant un arrêt d'urgence","Une anomalie à vérifier rapidement, sans urgence extrême","Un simple rappel d'entretien annuel","Une information sans importance"], correct:1, exp:"L'orange signale une vigilance à avoir (contrôler dès que possible), contrairement au rouge qui indique une urgence."},
+{cat:"Mécanique & équipements", q:"Le témoin rouge de pression d'huile qui s'allume en roulant impose de :", choices:["Continuer normalement jusqu'à destination","S'arrêter dès que possible en sécurité et couper le moteur","Accélérer pour arriver plus vite au garage","Ouvrir le capot en roulant pour vérifier"], correct:1, exp:"Rouler avec une pression d'huile insuffisante peut endommager gravement le moteur : il faut s'arrêter rapidement."},
+{cat:"Mécanique & équipements", q:"Les feux de croisement doivent être utilisés :", choices:["Uniquement en pleine nuit sur autoroute","De nuit et dès que la visibilité est insuffisante (pluie, brouillard léger)","Uniquement en agglomération","Jamais de jour, même par mauvais temps"], correct:1, exp:"Dès que la visibilité baisse, de jour comme de nuit, les feux de croisement doivent être allumés pour voir et être vu."},
+{cat:"Mécanique & équipements", q:"Le liquide de frein doit être vérifié régulièrement car :", choices:["Il n'a aucune influence sur le freinage","Son niveau et son état influencent directement l'efficacité du freinage","Il sert uniquement au lave-glace","Il ne nécessite jamais d'entretien"], correct:1, exp:"Un liquide de frein en mauvais état ou insuffisant peut réduire l'efficacité du freinage, un point de sécurité essentiel."},
+{cat:"Mécanique & équipements", q:"L'ABS (système antiblocage des roues) sert principalement à :", choices:["Augmenter la vitesse maximale du véhicule","Éviter le blocage des roues au freinage et garder la maîtrise de la direction","Remplacer le frein à main","Réduire la consommation de carburant"], correct:1, exp:"L'ABS empêche les roues de se bloquer en freinage d'urgence, ce qui permet de continuer à diriger le véhicule."},
+{cat:"Mécanique & équipements", q:"Une usure irrégulière des pneus peut indiquer :", choices:["Un problème de parallélisme ou de pression mal réglée","Que le véhicule est trop récent","Un simple effet du climat, sans cause mécanique","Rien de particulier à vérifier"], correct:0, exp:"Une usure inégale signale souvent un défaut de géométrie (parallélisme) ou une pression inadaptée à corriger rapidement."},
+{cat:"Mécanique & équipements", q:"Le rôle principal de la ceinture de sécurité en cas de choc est de :", choices:["Décorer l'habitacle","Retenir l'occupant et limiter les mouvements violents du corps","Actionner automatiquement les airbags","Réduire le bruit du moteur"], correct:1, exp:"La ceinture retient le corps et répartit les forces du choc, réduisant fortement le risque de blessures graves."},
+
+{cat:"Poste de conduite", q:"Le réglage correct du rétroviseur intérieur doit permettre de voir :", choices:["Uniquement la route devant soi","La lunette arrière du véhicule dans sa totalité","Seulement les pieds des passagers arrière","Rien en particulier, il est décoratif"], correct:1, exp:"Un bon réglage du rétroviseur intérieur permet de couvrir toute la vue arrière à travers la lunette."},
+{cat:"Poste de conduite", q:"La distance idéale entre le conducteur et le volant doit permettre :", choices:["De tendre complètement les bras pour l'atteindre","De garder les coudes légèrement fléchis en tenant le volant","De toucher le volant du bout des doigts seulement","Aucune règle particulière ne s'applique"], correct:1, exp:"Des coudes légèrement fléchis permettent de garder de la force et de la précision dans les manœuvres."},
+{cat:"Poste de conduite", q:"Le repose-tête doit être réglé de façon à :", choices:["Être placé le plus bas possible pour le confort","Arriver à hauteur du sommet de la tête pour limiter le coup du lapin","Être retiré si le trajet est court","N'avoir aucune incidence sur la sécurité"], correct:1, exp:"Un repose-tête bien réglé limite le mouvement brutal de la tête vers l'arrière lors d'un choc arrière."},
+{cat:"Poste de conduite", q:"Avant de démarrer, vérifier ses angles morts consiste à :", choices:["Regarder uniquement le rétroviseur central","Tourner brièvement la tête pour voir les zones invisibles dans les rétroviseurs","Se fier uniquement aux capteurs électroniques","Ne concerner que les manœuvres de stationnement"], correct:1, exp:"Les rétroviseurs ne couvrent pas tout : un coup d'œil direct reste nécessaire avant certaines manœuvres."},
+{cat:"Poste de conduite", q:"La position des mains recommandée sur le volant est le plus souvent :", choices:["Une seule main en haut du volant","Les deux mains de part et d'autre du volant, en position symétrique","Les deux mains superposées au centre","Peu importe la position tant qu'on tient le volant"], correct:1, exp:"Une prise symétrique des deux mains offre un meilleur contrôle et une réaction plus rapide en cas d'imprévu."},
+
+{cat:"Panneaux danger", q:"Un panneau annonçant une descente dangereuse invite à :", choices:["Accélérer pour profiter de la pente","Rétrograder et anticiper un freinage progressif","Rouler au point mort pour économiser du carburant","Ignorer le panneau si le véhicule est récent"], correct:1, exp:"En descente, rétrograder permet de profiter du frein moteur et d'éviter une surchauffe des freins."},
+{cat:"Panneaux danger", q:"Le panneau annonçant un vent latéral fréquent invite à :", choices:["Tenir fermement le volant et adapter sa vitesse, notamment pour les véhicules hauts","Ignorer le panneau si la route est large","Accélérer pour traverser la zone plus vite","Rouler uniquement au centre de la chaussée"], correct:0, exp:"Le vent latéral peut déstabiliser le véhicule, en particulier les véhicules hauts ou les remorques."},
+{cat:"Panneaux danger", q:"Un panneau de danger temporaire (fond jaune) signale en général :", choices:["Un danger permanent identique aux panneaux blancs","Un danger ponctuel, souvent lié à des travaux","Une interdiction définitive","Une simple indication touristique"], correct:1, exp:"Le fond jaune est utilisé pour la signalisation temporaire, notamment lors de travaux ou d'événements ponctuels."},
+{cat:"Panneaux danger", q:"Le panneau annonçant une chaussée déformée (nids-de-poule, bosses) impose de :", choices:["Rouler normalement, la route reste praticable sans précaution","Réduire sa vitesse pour garder le contrôle du véhicule","Accélérer pour passer plus vite sur la zone","S'arrêter obligatoirement avant la zone"], correct:1, exp:"Une chaussée déformée peut déséquilibrer le véhicule ; ralentir permet de garder la maîtrise de la direction."},
+
+{cat:"Panneaux obligation", q:"Un panneau rond bleu avec des flèches montrant plusieurs directions possibles indique :", choices:["Un choix de directions obligatoires, toutes autorisées à cet endroit","Un sens interdit dans toutes les directions sauf une","Un rond-point obligatoire uniquement","Un parking réservé"], correct:0, exp:"Ce panneau autorise plusieurs directions au choix, contrairement à un panneau à flèche unique qui impose une seule direction."},
+{cat:"Panneaux obligation", q:"Le panneau \"chaînes à neige obligatoires\" impose que :", choices:["Les chaînes soient conseillées mais facultatives","Les véhicules équipent leurs roues motrices de chaînes ou équivalents homologués avant de poursuivre","Seuls les poids lourds soient concernés","Le panneau ne s'applique qu'aux motos"], correct:1, exp:"Ce panneau rend l'équipement (chaînes ou dispositifs équivalents) obligatoire pour continuer sur cette portion."},
+
+{cat:"Priorités", q:"Un conducteur qui souhaite changer de file doit :", choices:["Se rabattre directement, les autres s'adapteront","Vérifier ses angles morts, mettre son clignotant et s'assurer que la manœuvre est possible sans danger","Accélérer fortement avant de se rabattre","Ne signaler son intention qu'après avoir changé de file"], correct:1, exp:"Anticiper, signaler et vérifier sont les trois étapes indispensables avant tout changement de file."},
+{cat:"Priorités", q:"À un carrefour à sens giratoire signalé \"Cédez le passage\" à l'entrée, un véhicule qui entre doit :", choices:["Avoir la priorité sur les véhicules déjà engagés","Céder le passage aux véhicules déjà présents dans l'anneau","S'arrêter obligatoirement même si l'anneau est vide","Attendre un agent pour être autorisé à entrer"], correct:1, exp:"Le panneau cédez-le-passage à l'entrée confirme la règle générale : priorité à ceux déjà engagés dans le rond-point."},
+
+{cat:"Vitesses & distances", q:"Pour un conducteur en période probatoire, la vitesse maximale sur autoroute est généralement limitée à :", choices:["130 km/h comme les autres conducteurs","110 km/h au lieu de 130 km/h","90 km/h dans tous les cas","Aucune limite spécifique"], correct:1, exp:"Durant la période probatoire, la vitesse maximale sur autoroute est réduite (110 km/h au lieu de 130 km/h par temps sec)."},
+{cat:"Vitesses & distances", q:"Une distance de sécurité insuffisante avec le véhicule qui précède augmente surtout le risque :", choices:["De consommer plus de carburant","De collision en cas de freinage soudain devant soi","De perdre son chemin","D'user prématurément les pneus"], correct:1, exp:"Sans distance suffisante, le temps de réaction manque en cas de freinage brusque du véhicule devant soi."},
+
+{cat:"Alcool & fatigue", q:"Un éthylotest indiquant un résultat positif signifie que :", choices:["Le conducteur peut quand même prendre le volant s'il se sent bien","Le taux d'alcool dépasse la limite autorisée et la conduite est à proscrire","L'appareil est probablement défectueux","Le résultat ne concerne que les contrôles policiers"], correct:1, exp:"Un résultat positif indique un dépassement du seuil légal : il ne faut pas prendre le volant dans ce cas."},
+{cat:"Alcool & fatigue", q:"Après une nuit très courte, avant un trajet long, il est conseillé de :", choices:["Partir quand même, le café suffira à tenir la route","Reporter le départ ou prévoir des pauses fréquentes avec du repos réel","Rouler plus vite pour raccourcir le temps d'exposition à la fatigue","Ouvrir toutes les fenêtres pour rester éveillé toute la route"], correct:1, exp:"Le manque de sommeil ne se compense pas durablement par un stimulant : mieux vaut repousser ou multiplier les vraies pauses."},
+
+{cat:"Sécurité & équipements", q:"Le port du casque à vélo pour un enfant de moins de 12 ans est :", choices:["Facultatif dans tous les cas","Obligatoire, que ce soit comme conducteur ou passager","Réservé aux trajets de plus de 5 km","Interdit en agglomération"], correct:1, exp:"Le port du casque est obligatoire pour les enfants de moins de 12 ans à vélo, conducteurs comme passagers."},
+{cat:"Sécurité & équipements", q:"Les warnings (feux de détresse) doivent être utilisés :", choices:["En toutes circonstances lors d'un simple ralentissement","Pour signaler un danger ponctuel (arrêt d'urgence, ralentissement brutal du trafic)","Uniquement de nuit","Comme substitut permanent au clignotant"], correct:1, exp:"Les feux de détresse signalent une situation exceptionnelle et non un usage courant de circulation."},
+
+{cat:"Premiers secours", q:"Avant de porter secours à une victime, il faut d'abord :", choices:["S'assurer qu'il n'y a pas de sur-danger pour soi-même et les autres","Se précipiter sans évaluer la situation","Attendre l'autorisation des forces de l'ordre","Déplacer systématiquement la victime en lieu sûr"], correct:0, exp:"La sécurité du sauveteur passe avant tout : on ne doit jamais devenir soi-même une victime supplémentaire."},
+
+{cat:"Éco-conduite", q:"Anticiper les ralentissements en relâchant tôt l'accélérateur permet de :", choices:["Économiser du carburant et réduire l'usure des freins","Consommer davantage de carburant","N'a aucun effet notable","Endommager la boîte de vitesses"], correct:0, exp:"Relâcher l'accélérateur en amont permet de ralentir en douceur et d'économiser du carburant."},
+
+{cat:"Autoroute", q:"Sur autoroute, la voie de gauche est en priorité destinée :", choices:["Au dépassement, avant de revenir sur une voie de droite","À la circulation permanente, quelle que soit la vitesse","Aux véhicules lents","Au stationnement de courte durée"], correct:0, exp:"La voie de gauche sert au dépassement ; il faut se rabattre ensuite pour laisser la voie libre au trafic plus rapide."}
+];
+
+/* =====================================================
+   STORAGE
+   ===================================================== */
+const STORE_KEY = "codeTdah_v1";
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {
+    points:0, streak:0, lastPracticeDate:null,
+    totalAnswered:0, totalCorrect:0,
+    wrongCounts:{} // qIndex -> count
+  };
+}
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+}
+let state = loadState();
+
+/* =====================================================
+   HELPERS
+   ===================================================== */
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function updateStreakOnFirstSessionToday(){
+  const today = todayStr();
+  if(state.lastPracticeDate === today) return;
+  const yest = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  state.streak = (state.lastPracticeDate === yest) ? state.streak + 1 : 1;
+  state.lastPracticeDate = today;
+  saveState();
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function pickSessionQuestions(n){
+  // weight questions previously answered wrong, higher chance to reappear
+  const weighted = [];
+  QUESTIONS.forEach((q,idx)=>{
+    const w = 1 + (state.wrongCounts[idx]||0)*2;
+    for(let i=0;i<w;i++) weighted.push(idx);
+  });
+  const chosen = new Set();
+  const shuffledWeighted = shuffle(weighted);
+  for(const idx of shuffledWeighted){
+    if(chosen.size>=n) break;
+    chosen.add(idx);
+  }
+  // fallback if not enough unique
+  if(chosen.size<n){
+    shuffle(QUESTIONS.map((_,i)=>i)).forEach(i=>{ if(chosen.size<n) chosen.add(i); });
+  }
+  return Array.from(chosen);
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function renderTopStats(){
+  document.getElementById('streakPill').textContent = state.streak;
+  document.getElementById('pointsPill').textContent = state.points;
+}
+
+/* =====================================================
+   HOME SCREEN LOGIC
+   ===================================================== */
+let selectedLen = 10;
+document.querySelectorAll('.session-opt').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.session-opt').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedLen = parseInt(btn.dataset.len,10);
+  });
+});
+
+function renderHome(){
+  document.getElementById('mStreak').textContent = state.streak;
+  document.getElementById('mDone').textContent = state.totalAnswered;
+  document.getElementById('mAccuracy').textContent = state.totalAnswered
+    ? Math.round(100*state.totalCorrect/state.totalAnswered)+'%' : '—';
+
+  // focus categories = categories with most wrong answers
+  const catWrong = {};
+  Object.entries(state.wrongCounts).forEach(([idx,count])=>{
+    const cat = QUESTIONS[idx].cat;
+    catWrong[cat] = (catWrong[cat]||0) + count;
+  });
+  const top = Object.entries(catWrong).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+  const wrap = document.getElementById('focusChips');
+  wrap.innerHTML = '';
+  if(top.length===0){
+    wrap.innerHTML = '<span class="focus-chip">Pas encore assez de données — bonne première session !</span>';
+  }else{
+    top.forEach(c=>{
+      const span = document.createElement('span');
+      span.className='focus-chip';
+      span.textContent = c;
+      wrap.appendChild(span);
+    });
+  }
+  renderTopStats();
+}
+
+/* =====================================================
+   SESSION LOGIC
+   ===================================================== */
+let sessionQuestions = [];
+let sessionIdx = 0;
+let sessionCorrect = 0;
+let sessionAnswered = false;
+let sessionTimerTotal = 0; // seconds
+let sessionTimerLeft = 0;
+let sessionInterval = null;
+let paused = false;
+
+const GAUGE_CIRC = 2*Math.PI*52; // ~326.7
+
+function startSession(){
+  sessionQuestions = pickSessionQuestions(selectedLen);
+  sessionIdx = 0;
+  sessionCorrect = 0;
+  sessionTimerTotal = selectedLen * 48; // ~48s budget per question
+  sessionTimerLeft = sessionTimerTotal;
+  showScreen('screen-session');
+  startTimer();
+  renderQuestion();
+}
+
+function startTimer(){
+  clearInterval(sessionInterval);
+  sessionInterval = setInterval(()=>{
+    if(paused) return;
+    sessionTimerLeft = Math.max(0, sessionTimerLeft-1);
+    updateGauge();
+    if(sessionTimerLeft<=0){
+      clearInterval(sessionInterval);
+      finishSession();
+    }
+  },1000);
+}
+
+function updateGauge(){
+  const frac = sessionTimerLeft/sessionTimerTotal;
+  const offset = GAUGE_CIRC * (1-frac);
+  document.getElementById('gaugeProgress').style.strokeDashoffset = GAUGE_CIRC - (GAUGE_CIRC*frac);
+  const m = Math.floor(sessionTimerLeft/60).toString().padStart(2,'0');
+  const s = Math.floor(sessionTimerLeft%60).toString().padStart(2,'0');
+  document.getElementById('qTime').textContent = m+':'+s;
+}
+
+function renderQuestion(){
+  sessionAnswered = false;
+  const qIdx = sessionQuestions[sessionIdx];
+  const q = QUESTIONS[qIdx];
+  document.getElementById('qCount').textContent = (sessionIdx+1)+' / '+sessionQuestions.length;
+  document.getElementById('catLabel').textContent = q.cat;
+  document.getElementById('questionText').textContent = q.q;
+  const wrap = document.getElementById('choicesWrap');
+  wrap.innerHTML = '';
+  document.getElementById('explainBox').classList.remove('show');
+  document.getElementById('nextBtn').classList.remove('show');
+
+  const order = shuffle(q.choices.map((c,i)=>i));
+  order.forEach(choiceIdx=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = q.choices[choiceIdx];
+    btn.addEventListener('click', ()=>answer(qIdx, choiceIdx, order, btn));
+    wrap.appendChild(btn);
+  });
+  updateGauge();
+}
+
+function answer(qIdx, choiceIdx, order, btnEl){
+  if(sessionAnswered) return;
+  sessionAnswered = true;
+  const q = QUESTIONS[qIdx];
+  const isCorrect = choiceIdx === q.correct;
+  state.totalAnswered++;
+  if(isCorrect){
+    state.totalCorrect++;
+    sessionCorrect++;
+    state.points += 10;
+  }else{
+    state.wrongCounts[qIdx] = (state.wrongCounts[qIdx]||0)+1;
+  }
+  saveState();
+  renderTopStats();
+
+  document.querySelectorAll('#choicesWrap .choice').forEach((el, i)=>{
+    el.disabled = true;
+    const origIdx = order[i];
+    if(origIdx === q.correct) el.classList.add('correct');
+    else if(el===btnEl) el.classList.add('wrong');
+  });
+  const exp = document.getElementById('explainBox');
+  exp.textContent = q.exp;
+  exp.classList.add('show');
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  sessionIdx++;
+  if(sessionIdx>=sessionQuestions.length){
+    clearInterval(sessionInterval);
+    finishSession();
+  }else{
+    renderQuestion();
+  }
+});
+
+document.getElementById('skipBtn').addEventListener('click', ()=>{
+  sessionIdx++;
+  if(sessionIdx>=sessionQuestions.length){
+    clearInterval(sessionInterval);
+    finishSession();
+  }else{
+    renderQuestion();
+  }
+});
+
+document.getElementById('quitBtn').addEventListener('click', ()=>{
+  clearInterval(sessionInterval);
+  showScreen('screen-home');
+  renderHome();
+});
+
+document.getElementById('pauseBtn').addEventListener('click', ()=>{
+  paused = true;
+  goToBreak(180, "Petite pause libre. Reprends quand tu es prêt·e.");
+});
+
+/* ---------- BREAK SCREEN ---------- */
+let breakInterval = null;
+function goToBreak(seconds, message){
+  showScreen('screen-break');
+  document.getElementById('breakMsg').textContent = message;
+  let left = seconds;
+  const total = seconds;
+  clearInterval(breakInterval);
+  function tick(){
+    const m = Math.floor(left/60).toString().padStart(2,'0');
+    const s = Math.floor(left%60).toString().padStart(2,'0');
+    document.getElementById('breakTime').textContent = m+':'+s;
+    const frac = left/total;
+    document.getElementById('breakProgress').style.strokeDashoffset = GAUGE_CIRC*(1-frac);
+    if(left<=0){
+      clearInterval(breakInterval);
+      notify("Pause terminée", "C'est reparti, à ton rythme.");
+    }
+    left--;
+  }
+  tick();
+  breakInterval = setInterval(tick,1000);
+}
+document.getElementById('resumeBtn').addEventListener('click', ()=>{
+  clearInterval(breakInterval);
+  paused = false;
+  showScreen('screen-session');
+});
+
+/* ---------- FINISH SESSION ---------- */
+function finishSession(){
+  updateStreakOnFirstSessionToday();
+  const bonus = sessionCorrect===sessionQuestions.length ? 20 : 0;
+  state.points += bonus;
+  saveState();
+  document.getElementById('resultScore').textContent = sessionCorrect+'/'+sessionQuestions.length;
+  document.getElementById('pointsGain').textContent = '+'+(sessionCorrect*10+bonus)+' points'+(bonus?' (session parfaite !)':'');
+  const pct = sessionCorrect/sessionQuestions.length;
+  let resultMsg;
+  if(sessionQuestions.length===40){
+    resultMsg = sessionCorrect>=35
+      ? "Admis·e ! Le seuil officiel (35/40) est atteint."
+      : "Pas encore le seuil officiel (35/40) — encore "+(35-sessionCorrect)+" bonne(s) réponse(s) à trouver.";
+  }else{
+    resultMsg = pct===1 ? "Sans faute, respect." : pct>=0.7 ? "Belle régularité, continue comme ça." : "Bien joué d'être allé·e au bout — on retravaille les points faibles ensuite.";
+  }
+  document.getElementById('resultMsg').textContent = resultMsg;
+  document.getElementById('rStreak').textContent = state.streak;
+  document.getElementById('rTotal').textContent = state.points;
+  showScreen('screen-results');
+  notify("Session terminée", sessionCorrect+"/"+sessionQuestions.length+" bonnes réponses.");
+}
+
+document.getElementById('backHomeBtn').addEventListener('click', ()=>{
+  showScreen('screen-home');
+  renderHome();
+});
+document.getElementById('startBtn').addEventListener('click', startSession);
+
+/* =====================================================
+   NOTIFICATIONS (rappels) — best effort, onglet actif requis
+   ===================================================== */
+function notify(title, body){
+  if("Notification" in window && Notification.permission === "granted"){
+    try{ new Notification(title, {body}); }catch(e){}
+  }else{
+    toast(title+' — '+body);
+  }
+}
+document.getElementById('notifBtn').addEventListener('click', ()=>{
+  if(!("Notification" in window)){
+    toast("Les notifications ne sont pas prises en charge par ce navigateur.");
+    return;
+  }
+  if(Notification.permission === "granted"){
+    toast("Rappels déjà activés.");
+    return;
+  }
+  Notification.requestPermission().then(perm=>{
+    toast(perm==="granted" ? "Rappels activés." : "Rappels non activés.");
+  });
+});
+
+/* =====================================================
+   INIT
+   ===================================================== */
+renderHome();
+</script>
+</body>
+</html>
